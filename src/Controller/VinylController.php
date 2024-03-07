@@ -2,12 +2,10 @@
 
 namespace App\Controller;
 
-use Psr\Cache\CacheItemInterface;
+use App\Service\MixRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use function Symfony\Component\String\u;
 
@@ -32,19 +30,12 @@ class VinylController extends AbstractController
     }
 
     #[Route('/browse/{slug}', name: 'app_browse')]
-    public function browse(HttpClientInterface $httpClient, CacheInterface $cache, string $slug = null): Response
+    public function browse(MixRepository $mixRepository, string $slug = null): Response
     {
-        dump($cache);
-        
+       
         $genre = $slug ? u(str_replace('-', ' ', $slug))->title(true) : null;
-        
-        $mixes = $cache->get('mixes_data', function(CacheItemInterface $cacheItem) use ($httpClient){ //use() is used to pass the $httpClient variable to the closure
-            $cacheItem->expiresAfter(5);
 
-            $response = $httpClient->request('GET', 'https://raw.githubusercontent.com/SymfonyCasts/vinyl-mixes/main/mixes.json');
-
-            return $response->toArray();
-        });
+        $mixes = $mixRepository->findAll();
 
         return $this->render('vinyl/browse.html.twig', [
             'genre' => $genre,
