@@ -11,7 +11,7 @@ class MixRepository
 {
     public function __construct(
         private readonly CacheInterface $cache,
-        private readonly HttpClientInterface $httpClient,
+        private readonly HttpClientInterface $githubContentClient,
         #[Autowire('%kernel.debug%')]
         private bool $isDebug
     )
@@ -20,12 +20,10 @@ class MixRepository
     
     public function findAll(): array
     {
-        $httpClient = $this->httpClient;
-
         return $this->cache->get('mixes_data', function(CacheItemInterface $cacheItem){ //use() is used to pass the $httpClient variable to the closure
             $cacheItem->expiresAfter($this->isDebug ? 5 : 60);
 
-            $response = $this->httpClient->request('GET', 'https://raw.githubusercontent.com/SymfonyCasts/vinyl-mixes/main/mixes.json');
+            $response = $this->githubContentClient->request('GET', '/SymfonyCasts/vinyl-mixes/main/mixes.json');
 
             return $response->toArray();
         });
